@@ -87,7 +87,9 @@ For each of the 5 career paths, use EXACTLY this format — do not deviate:
 [2–3 sentences describing a typical day, grounded and specific — not generic]
 
 **Realistic salary range**
-[Entry / Mid / Senior figures with context. Be specific — e.g. "$120k–$160k base + bonus at top firms"]
+- Entry: [figure + context]
+- Mid: [figure + context]
+- Senior: [figure + context]
 
 **What you'd love**
 - [specific thing aligned with their preferences]
