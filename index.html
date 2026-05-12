@@ -381,6 +381,45 @@
       color: #dc2626;
       margin-top: 24px;
     }
+
+    .results-main-header {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+
+    .results-subtitle {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-secondary);
+      margin-bottom: 32px;
+    }
+
+    #results-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 12px 0;
+    }
+
+    #results-content li {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      padding-left: 18px;
+      position: relative;
+      margin-bottom: 5px;
+    }
+
+    #results-content li::before {
+      content: '–';
+      position: absolute;
+      left: 0;
+      color: var(--text-tertiary);
+    }
   </style>
 </head>
 <body>
@@ -409,6 +448,95 @@
 
 <script>
   const STEPS = [
+    {
+      id: 'background',
+      title: 'A bit about you',
+      subtitle: 'This context helps us recommend roles that fit where you actually are.',
+      render() {
+        const majors = [
+          'Business & Economics',
+          'Engineering & Computer Science',
+          'Natural Sciences',
+          'Liberal Arts & Humanities',
+          'Social Sciences',
+          'Mathematics & Statistics',
+          'Pre-Med / Biology',
+          'Law & Political Science',
+        ];
+        return `
+          <p class="section-label">Undergrad major — select all that apply</p>
+          <div class="checkbox-grid">
+            ${majors.map((s, i) => `
+              <div class="checkbox-card">
+                <input type="checkbox" name="undergradMajor" id="major-${i}" value="${s}">
+                <label for="major-${i}">${s}</label>
+              </div>
+            `).join('')}
+          </div>
+
+          <p class="section-label">Years since undergrad graduation</p>
+          <div class="card-group horizontal">
+            ${[
+              { v: '0-2', t: '0–2 years' },
+              { v: '3-5', t: '3–5 years' },
+              { v: '6-10', t: '6–10 years' },
+              { v: '11+', t: '11+ years' },
+            ].map(o => `
+              <div class="radio-card">
+                <input type="radio" name="yearsOutUndergrad" id="yrs-${o.v}" value="${o.v}">
+                <label for="yrs-${o.v}">
+                  <div class="card-title">${o.t}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="currentRole">Current role</label>
+            <input type="text" id="currentRole" placeholder="e.g. Associate at McKinsey, Software Engineer at Google...">
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="currentIndustry">Current industry</label>
+            <input type="text" id="currentIndustry" placeholder="e.g. Management Consulting, Technology, Finance...">
+          </div>
+
+          <p class="section-label">MBA status</p>
+          <div class="card-group">
+            ${[
+              { v: 'post-mba-recruiting', t: 'Currently recruiting post-MBA', d: 'In an MBA program, targeting full-time roles' },
+              { v: 'post-mba-grad', t: 'Recent MBA graduate', d: 'Graduated within the last 2 years' },
+              { v: 'mba-grad-established', t: 'MBA graduate (2+ years out)', d: 'Have been in post-MBA roles for a while' },
+              { v: 'pre-mba', t: 'Pre-MBA / no MBA planned', d: 'Exploring options before or without an MBA' },
+            ].map(o => `
+              <div class="radio-card">
+                <input type="radio" name="mbaStatus" id="mba-${o.v}" value="${o.v}">
+                <label for="mba-${o.v}">
+                  <div class="card-title">${o.t}</div>
+                  <div class="card-desc">${o.d}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+      validate() {
+        return !!document.querySelector('input[name="yearsOutUndergrad"]:checked') &&
+               !!document.querySelector('input[name="mbaStatus"]:checked');
+      },
+      getValue() {
+        const majors = [...document.querySelectorAll('input[name="undergradMajor"]:checked')].map(el => el.value);
+        const years = document.querySelector('input[name="yearsOutUndergrad"]:checked');
+        const mbaStatus = document.querySelector('input[name="mbaStatus"]:checked');
+        return {
+          undergradMajor: majors,
+          yearsOutUndergrad: years ? years.value : null,
+          currentRole: document.getElementById('currentRole').value.trim(),
+          currentIndustry: document.getElementById('currentIndustry').value.trim(),
+          mbaStatus: mbaStatus ? mbaStatus.value : null,
+        };
+      }
+    },
     {
       id: 'workStyle',
       title: 'How do you like to work?',
@@ -537,6 +665,47 @@
         const checked = [...document.querySelectorAll('input[name="skills"]:checked')].map(el => el.value);
         const text = document.getElementById('skills-text').value.trim();
         return { skills: checked, skillsFreeText: text };
+      }
+    },
+    {
+      id: 'industries',
+      title: 'Which industries interest you?',
+      subtitle: 'Select all that appeal — leave blank if you\'re open to anything.',
+      render() {
+        const industries = [
+          'Technology & Software',
+          'Finance & Banking',
+          'Private Equity & VC',
+          'Management Consulting',
+          'Healthcare & Biotech',
+          'Consumer & Retail',
+          'Media & Entertainment',
+          'Real Estate',
+          'Energy & Sustainability',
+          'Government & Policy',
+          'Nonprofits & Social Impact',
+          'Industrials & Manufacturing',
+        ];
+        return `
+          <div class="checkbox-grid">
+            ${industries.map((s, i) => `
+              <div class="checkbox-card">
+                <input type="checkbox" name="industries" id="ind-${i}" value="${s}">
+                <label for="ind-${i}">${s}</label>
+              </div>
+            `).join('')}
+          </div>
+          <div class="input-group" style="margin-top: 20px;">
+            <label class="input-label" for="industries-text">Anything specific?</label>
+            <textarea id="industries-text" placeholder="e.g. I'm drawn to climate tech, or I want to work at a FAANG company..."></textarea>
+          </div>
+        `;
+      },
+      validate() { return true; },
+      getValue() {
+        const checked = [...document.querySelectorAll('input[name="industries"]:checked')].map(el => el.value);
+        const text = document.getElementById('industries-text').value.trim();
+        return { industries: checked, industriesFreeText: text };
       }
     },
     {
@@ -729,37 +898,59 @@
   }
 
   function renderMarkdown(text) {
-    let html = text
-      // Career title headings
-      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-      // Section labels (**bold** on its own line)
-      .replace(/^\*\*(.+?)\*\*/gm, '<h3>$1</h3>')
-      // Horizontal rule
-      .replace(/^---$/gm, '<hr>')
-      // Inline bold within text
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-    // Wrap paragraphs (lines that aren't headings/hr)
-    const lines = html.split('\n');
+    const lines = text.split('\n');
     const out = [];
+    let inList = false;
     let inParagraph = false;
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed) {
-        if (inParagraph) { out.push('</p>'); inParagraph = false; }
+    function inlineBold(s) {
+      return s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+    function closeParagraph() {
+      if (inParagraph) { out.push('</p>'); inParagraph = false; }
+    }
+    function closeList() {
+      if (inList) { out.push('</ul>'); inList = false; }
+    }
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+
+      if (!line) {
+        closeParagraph();
+        closeList();
         continue;
       }
-      if (trimmed.startsWith('<h2>') || trimmed.startsWith('<h3>') || trimmed.startsWith('<hr>')) {
-        if (inParagraph) { out.push('</p>'); inParagraph = false; }
-        out.push(trimmed);
+
+      if (/^### /.test(line)) {
+        closeParagraph(); closeList();
+        out.push(`<p class="results-subtitle">${inlineBold(line.slice(4))}</p>`);
+      } else if (/^## /.test(line)) {
+        closeParagraph(); closeList();
+        out.push(`<h2>${inlineBold(line.slice(3))}</h2>`);
+      } else if (/^# /.test(line)) {
+        closeParagraph(); closeList();
+        out.push(`<p class="results-main-header">${inlineBold(line.slice(2))}</p>`);
+      } else if (/^\*\*(.+?)\*\*$/.test(line)) {
+        closeParagraph(); closeList();
+        out.push(`<h3>${line.match(/^\*\*(.+?)\*\*$/)[1]}</h3>`);
+      } else if (/^[-*] /.test(line)) {
+        closeParagraph();
+        if (!inList) { out.push('<ul>'); inList = true; }
+        out.push(`<li>${inlineBold(line.slice(2))}</li>`);
+      } else if (line === '---') {
+        closeParagraph(); closeList();
+        out.push('<hr>');
       } else {
+        closeList();
+        const content = inlineBold(line);
         if (!inParagraph) { out.push('<p>'); inParagraph = true; }
         else { out.push(' '); }
-        out.push(trimmed);
+        out.push(content);
       }
     }
-    if (inParagraph) out.push('</p>');
+    closeParagraph();
+    closeList();
     return out.join('');
   }
 
