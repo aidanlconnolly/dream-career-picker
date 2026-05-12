@@ -87,9 +87,9 @@ For each of the 5 career paths, use EXACTLY this format — do not deviate:
 [2–3 sentences describing a typical day, grounded and specific — not generic]
 
 **Realistic salary range**
-- [Early career: specific figure + context]
-- [Mid-career: specific figure + context]
-- [Senior/experienced: specific figure + context]
+- Entry: [figure + context]
+- Mid: [figure + context]
+- Senior: [figure + context]
 
 **What you'd love**
 - [specific thing aligned with their preferences]
