@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dream Career Picker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --surface: #fafafa;
+      --border: #e8e8e8;
+      --border-active: #1a1a1a;
+      --text-primary: #1a1a1a;
+      --text-secondary: #5a5a5a;
+      --text-tertiary: #9b9b9b;
+      --accent: #1a1a1a;
+      --accent-light: #f2f2f2;
+      --radius: 12px;
+      --transition: 240ms ease;
+    }
+
+    body {
+      background: var(--bg);
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 680px;
+      padding: 52px 24px 100px;
+    }
+
+    /* Progress */
+    #progress-bar-container {
+      margin-bottom: 52px;
+    }
+
+    #progress-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+
+    #progress-track {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+    }
+
+    #progress-bar {
+      height: 2px;
+      background: var(--accent);
+      border-radius: 1px;
+      width: 0%;
+      transition: width 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Quiz container transitions */
+    #quiz-container {
+      opacity: 1;
+      transform: translateX(0);
+      transition: opacity var(--transition), transform var(--transition);
+    }
+
+    #quiz-container.exiting {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    #quiz-container.entering {
+      opacity: 0;
+      transform: translateX(20px);
+    }
+
+    /* Step header */
+    .step-title {
+      font-size: 30px;
+      font-weight: 650;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .step-subtitle {
+      font-size: 15px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 36px;
+    }
+
+    /* Radio cards */
+    .card-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .card-group.horizontal {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .card-group.horizontal .radio-card {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    .radio-card input[type="radio"] { display: none; }
+
+    .radio-card label {
+      display: block;
+      padding: 15px 18px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      user-select: none;
+    }
+
+    .radio-card input:checked + label,
+    .radio-card input[type="checkbox"]:checked + label {
+      border-color: var(--border-active);
+      background: var(--accent-light);
+    }
+
+    .radio-card label:hover {
+      border-color: #c0c0c0;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+
+    /* Checkboxes */
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-card input[type="checkbox"] { display: none; }
+
+    .checkbox-card label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 450;
+      color: var(--text-primary);
+      transition: border-color var(--transition), background var(--transition);
+      user-select: none;
+    }
+
+    .checkbox-card label::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: border-color var(--transition), background var(--transition);
+    }
+
+    .checkbox-card input:checked + label {
+      border-color: var(--border-active);
+      background: var(--accent-light);
+    }
+
+    .checkbox-card input:checked + label::before {
+      border-color: var(--border-active);
+      background: var(--accent);
+      background-image: url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4L3.5 6.5L9 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .checkbox-card label:hover {
+      border-color: #c0c0c0;
+    }
+
+    /* Text inputs */
+    .input-group {
+      margin-bottom: 28px;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 10px;
+    }
+
+    textarea, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--text-primary);
+      background: var(--bg);
+      outline: none;
+      transition: border-color var(--transition);
+      -webkit-appearance: none;
+    }
+
+    textarea:focus, input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--border-active);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+      line-height: 1.5;
+    }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 28px;
+      margin-bottom: 12px;
+    }
+
+    /* Button */
+    .btn-next {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 14px 36px;
+      font-size: 15px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 36px;
+      letter-spacing: -0.01em;
+      transition: opacity 150ms ease;
+    }
+
+    .btn-next:hover { opacity: 0.82; }
+    .btn-next:active { opacity: 0.7; }
+    .btn-next:disabled { opacity: 0.3; cursor: default; }
+
+    /* Results */
+    #results-container {
+      display: none;
+    }
+
+    #results-header {
+      margin-bottom: 40px;
+    }
+
+    #results-title {
+      font-size: 30px;
+      font-weight: 650;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+
+    #stream-indicator {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stream-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--text-tertiary);
+      border-radius: 50%;
+      animation: pulse 1.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.25; transform: scale(0.8); }
+    }
+
+    #results-content h2 {
+      font-size: 22px;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      margin-top: 56px;
+      margin-bottom: 20px;
+      padding-top: 56px;
+      border-top: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+
+    #results-content h2:first-child {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+
+    #results-content h3 {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    #results-content p {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    #results-content hr {
+      display: none;
+    }
+
+    #restart-btn {
+      margin-top: 64px;
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: 8px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color var(--transition), color var(--transition);
+    }
+
+    #restart-btn:hover {
+      border-color: var(--border-active);
+      color: var(--text-primary);
+    }
+
+    .error-msg {
+      background: #fff5f5;
+      border: 1.5px solid #fecaca;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 14px;
+      color: #dc2626;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="progress-bar-container">
+    <div id="progress-label">Step 1 of 6</div>
+    <div id="progress-track">
+      <div id="progress-bar"></div>
+    </div>
+  </div>
+
+  <div id="quiz-container"></div>
+
+  <div id="results-container">
+    <div id="results-header">
+      <h1 id="results-title">Your Career Paths</h1>
+      <div id="stream-indicator">
+        <div class="stream-dot"></div>
+        Generating your results
+      </div>
+    </div>
+    <div id="results-content"></div>
+    <button id="restart-btn" onclick="restart()" style="display:none">Start over</button>
+  </div>
+</div>
+
+<script>
+  const STEPS = [
+    {
+      id: 'workStyle',
+      title: 'How do you like to work?',
+      subtitle: 'Choose what feels most natural, not what sounds impressive.',
+      render() {
+        return `
+          <p class="section-label">Environment — select all that apply</p>
+          <div class="card-group horizontal">
+            <div class="radio-card">
+              <input type="checkbox" name="workStyle" id="ws-structured" value="structured">
+              <label for="ws-structured">
+                <div class="card-title">Structured</div>
+                <div class="card-desc">Clear processes, defined roles</div>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="checkbox" name="workStyle" id="ws-autonomous" value="autonomous">
+              <label for="ws-autonomous">
+                <div class="card-title">Autonomous</div>
+                <div class="card-desc">Set your own path, figure it out</div>
+              </label>
+            </div>
+          </div>
+          <p class="section-label">Team size — select all that apply</p>
+          <div class="card-group">
+            <div class="radio-card">
+              <input type="checkbox" name="teamSize" id="ts-big" value="large team">
+              <label for="ts-big">
+                <div class="card-title">Large organization</div>
+                <div class="card-desc">Resources, brand, clear hierarchy</div>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="checkbox" name="teamSize" id="ts-small" value="small team">
+              <label for="ts-small">
+                <div class="card-title">Small team</div>
+                <div class="card-desc">Wear many hats, move fast</div>
+              </label>
+            </div>
+            <div class="radio-card">
+              <input type="checkbox" name="teamSize" id="ts-solo" value="mostly solo">
+              <label for="ts-solo">
+                <div class="card-title">Mostly solo</div>
+                <div class="card-desc">Independent work, minimal coordination</div>
+              </label>
+            </div>
+          </div>
+        `;
+      },
+      validate() {
+        return document.querySelectorAll('input[name="workStyle"]:checked').length > 0 &&
+               document.querySelectorAll('input[name="teamSize"]:checked').length > 0;
+      },
+      getValue() {
+        const ws = [...document.querySelectorAll('input[name="workStyle"]:checked')].map(el => el.value);
+        const ts = [...document.querySelectorAll('input[name="teamSize"]:checked')].map(el => el.value);
+        return { workStyle: ws, teamSize: ts };
+      }
+    },
+    {
+      id: 'motivation',
+      title: 'What drives you most?',
+      subtitle: 'Select all that apply — most people are wired for more than one.',
+      render() {
+        const options = [
+          { value: 'money', title: 'Money', desc: 'Maximizing financial outcomes' },
+          { value: 'impact', title: 'Impact', desc: 'Changing something that matters' },
+          { value: 'creativity', title: 'Creativity', desc: 'Making things that didn\'t exist before' },
+          { value: 'status', title: 'Status', desc: 'Recognition, prestige, being known' },
+          { value: 'learning', title: 'Learning', desc: 'Constant growth and intellectual challenge' },
+        ];
+        return `
+          <div class="card-group">
+            ${options.map(o => `
+              <div class="radio-card">
+                <input type="checkbox" name="motivation" id="mot-${o.value}" value="${o.value}">
+                <label for="mot-${o.value}">
+                  <div class="card-title">${o.title}</div>
+                  <div class="card-desc">${o.desc}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+      validate() {
+        return document.querySelectorAll('input[name="motivation"]:checked').length > 0;
+      },
+      getValue() {
+        const els = [...document.querySelectorAll('input[name="motivation"]:checked')].map(el => el.value);
+        return { motivation: els };
+      }
+    },
+    {
+      id: 'skills',
+      title: 'What are you genuinely great at?',
+      subtitle: 'Select all that apply — and add anything not on the list.',
+      render() {
+        const skills = [
+          'Writing & communication',
+          'Quantitative analysis',
+          'Selling & persuasion',
+          'Coding & technical',
+          'Managing & leading',
+          'Designing & visual',
+          'Advising & consulting',
+          'Building & execution',
+        ];
+        return `
+          <div class="checkbox-grid">
+            ${skills.map((s, i) => `
+              <div class="checkbox-card">
+                <input type="checkbox" name="skills" id="skill-${i}" value="${s}">
+                <label for="skill-${i}">${s}</label>
+              </div>
+            `).join('')}
+          </div>
+          <div class="input-group" style="margin-top: 20px;">
+            <label class="input-label" for="skills-text">Anything else?</label>
+            <textarea id="skills-text" placeholder="e.g. I'm unusually good at reading a room, building trust quickly with new people..."></textarea>
+          </div>
+        `;
+      },
+      validate() { return true; },
+      getValue() {
+        const checked = [...document.querySelectorAll('input[name="skills"]:checked')].map(el => el.value);
+        const text = document.getElementById('skills-text').value.trim();
+        return { skills: checked, skillsFreeText: text };
+      }
+    },
+    {
+      id: 'lifestyle',
+      title: 'How do you want to live?',
+      subtitle: 'Your career has to fit your life, not the other way around.',
+      render() {
+        return `
+          <p class="section-label">Location</p>
+          <div class="card-group horizontal">
+            ${[
+              { v: 'remote', t: 'Remote', d: 'Work from anywhere' },
+              { v: 'hybrid', t: 'Hybrid', d: 'Mix of home & office' },
+              { v: 'onsite', t: 'In-office', d: 'Prefer being on-site' },
+              { v: 'flexible', t: 'Flexible', d: 'No strong preference' },
+            ].map(o => `
+              <div class="radio-card">
+                <input type="radio" name="locationPref" id="loc-${o.v}" value="${o.v}">
+                <label for="loc-${o.v}">
+                  <div class="card-title">${o.t}</div>
+                  <div class="card-desc">${o.d}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="hours-input">Hours per week</label>
+            <input type="number" id="hours-input" value="45" min="10" max="100" style="max-width: 160px;">
+          </div>
+
+          <p class="section-label">Travel</p>
+          <div class="card-group">
+            ${[
+              { v: 'none', t: 'No travel', d: 'Stay put, always' },
+              { v: 'minimal', t: 'Minimal', d: '1–2 trips per quarter' },
+              { v: 'moderate', t: 'Moderate', d: 'A few days per month' },
+              { v: 'heavy', t: 'Heavy', d: '50%+ on the road' },
+            ].map(o => `
+              <div class="radio-card">
+                <input type="radio" name="travelTolerance" id="travel-${o.v}" value="${o.v}">
+                <label for="travel-${o.v}">
+                  <div class="card-title">${o.t}</div>
+                  <div class="card-desc">${o.d}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+      validate() {
+        return !!document.querySelector('input[name="locationPref"]:checked') &&
+               !!document.querySelector('input[name="travelTolerance"]:checked');
+      },
+      getValue() {
+        const loc = document.querySelector('input[name="locationPref"]:checked');
+        const travel = document.querySelector('input[name="travelTolerance"]:checked');
+        const hours = document.getElementById('hours-input').value;
+        return {
+          locationPref: loc ? loc.value : null,
+          hoursPerWeek: hours,
+          travelTolerance: travel ? travel.value : null,
+        };
+      }
+    },
+    {
+      id: 'riskTolerance',
+      title: 'Stability or upside?',
+      subtitle: 'Where do you land on the spectrum?',
+      render() {
+        return `
+          <div class="card-group">
+            ${[
+              { v: 'low', t: 'Stable salary', d: 'Predictable comp, job security above all' },
+              { v: 'medium-low', t: 'Mostly stable', d: 'Solid base, modest bonus or equity' },
+              { v: 'medium', t: 'Balanced', d: 'Competitive base plus meaningful upside' },
+              { v: 'medium-high', t: 'Upside-leaning', d: 'Lower floor, higher ceiling' },
+              { v: 'high', t: 'High upside', d: 'Equity-driven, fine with real income volatility' },
+            ].map(o => `
+              <div class="radio-card">
+                <input type="radio" name="riskTolerance" id="risk-${o.v}" value="${o.v}">
+                <label for="risk-${o.v}">
+                  <div class="card-title">${o.t}</div>
+                  <div class="card-desc">${o.d}</div>
+                </label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+      validate() {
+        return !!document.querySelector('input[name="riskTolerance"]:checked');
+      },
+      getValue() {
+        const el = document.querySelector('input[name="riskTolerance"]:checked');
+        return { riskTolerance: el ? el.value : null };
+      }
+    },
+    {
+      id: 'dealBreakers',
+      title: 'What would you hate?',
+      subtitle: 'Select anything you\'d struggle to tolerate day-to-day.',
+      render() {
+        const items = [
+          'Bureaucracy & slow decisions',
+          'Frequent travel',
+          'Client-facing work',
+          'Open-plan offices',
+          'Repetitive work',
+          'High-stakes pressure',
+          'Public speaking',
+          'Unpredictable hours',
+          'Performance reviews',
+          'Sales quotas',
+        ];
+        return `
+          <div class="checkbox-grid">
+            ${items.map((s, i) => `
+              <div class="checkbox-card">
+                <input type="checkbox" name="dealBreakers" id="db-${i}" value="${s}">
+                <label for="db-${i}">${s}</label>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      },
+      validate() { return true; },
+      getValue() {
+        const checked = [...document.querySelectorAll('input[name="dealBreakers"]:checked')].map(el => el.value);
+        return { dealBreakers: checked };
+      }
+    }
+  ];
+
+  const STATE = {
+    currentStep: 0,
+    answers: {},
+  };
+
+  function updateProgress(step) {
+    const pct = (step / STEPS.length) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `Step ${step + 1} of ${STEPS.length}`;
+  }
+
+  function renderStep(index) {
+    const step = STEPS[index];
+    const container = document.getElementById('quiz-container');
+    container.innerHTML = `
+      <h1 class="step-title">${step.title}</h1>
+      <p class="step-subtitle">${step.subtitle}</p>
+      ${step.render()}
+      <button class="btn-next" onclick="advance()">${index < STEPS.length - 1 ? 'Continue' : 'See my results'}</button>
+    `;
+  }
+
+  function goToStep(index) {
+    const container = document.getElementById('quiz-container');
+    container.classList.add('exiting');
+    setTimeout(() => {
+      STATE.currentStep = index;
+      renderStep(index);
+      updateProgress(index);
+      container.classList.remove('exiting');
+      container.classList.add('entering');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          container.classList.remove('entering');
+        });
+      });
+    }, 220);
+  }
+
+  function advance() {
+    const step = STEPS[STATE.currentStep];
+    if (!step.validate()) return;
+    Object.assign(STATE.answers, step.getValue());
+    if (STATE.currentStep < STEPS.length - 1) {
+      goToStep(STATE.currentStep + 1);
+    } else {
+      showResults();
+    }
+  }
+
+  function showResults() {
+    document.getElementById('quiz-container').style.display = 'none';
+    document.getElementById('progress-bar-container').style.display = 'none';
+    document.getElementById('results-container').style.display = 'block';
+    streamResults(STATE.answers);
+  }
+
+  function renderMarkdown(text) {
+    let html = text
+      // Career title headings
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      // Section labels (**bold** on its own line)
+      .replace(/^\*\*(.+?)\*\*/gm, '<h3>$1</h3>')
+      // Horizontal rule
+      .replace(/^---$/gm, '<hr>')
+      // Inline bold within text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    // Wrap paragraphs (lines that aren't headings/hr)
+    const lines = html.split('\n');
+    const out = [];
+    let inParagraph = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        if (inParagraph) { out.push('</p>'); inParagraph = false; }
+        continue;
+      }
+      if (trimmed.startsWith('<h2>') || trimmed.startsWith('<h3>') || trimmed.startsWith('<hr>')) {
+        if (inParagraph) { out.push('</p>'); inParagraph = false; }
+        out.push(trimmed);
+      } else {
+        if (!inParagraph) { out.push('<p>'); inParagraph = true; }
+        else { out.push(' '); }
+        out.push(trimmed);
+      }
+    }
+    if (inParagraph) out.push('</p>');
+    return out.join('');
+  }
+
+  async function streamResults(answers) {
+    const resultsContent = document.getElementById('results-content');
+    const indicator = document.getElementById('stream-indicator');
+
+    let accumulated = '';
+
+    try {
+      const response = await fetch('/api/careers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(answers),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (payload === '[DONE]') {
+            indicator.style.display = 'none';
+            document.getElementById('restart-btn').style.display = 'inline-block';
+            return;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            accumulated += chunk;
+            resultsContent.innerHTML = renderMarkdown(accumulated);
+          } catch (e) {
+            // skip malformed chunk
+          }
+        }
+      }
+    } catch (err) {
+      indicator.style.display = 'none';
+      resultsContent.innerHTML += `<div class="error-msg">Something went wrong: ${err.message}. Make sure the server is running and your API key is set.</div>`;
+    }
+  }
+
+  function restart() {
+    STATE.currentStep = 0;
+    STATE.answers = {};
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('results-content').innerHTML = '';
+    document.getElementById('restart-btn').style.display = 'none';
+    document.getElementById('stream-indicator').style.display = 'flex';
+    document.getElementById('quiz-container').style.display = 'block';
+    document.getElementById('progress-bar-container').style.display = 'block';
+    renderStep(0);
+    updateProgress(0);
+  }
+
+  // Init
+  renderStep(0);
+  updateProgress(0);
+</script>
+</body>
+</html>

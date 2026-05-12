@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dream-career-picker",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["/Users/aidanconnolly/Desktop/Projects/Working/Dream Career Picker/server.py"],
+      "port": 5050
+    }
+  ]
+}
