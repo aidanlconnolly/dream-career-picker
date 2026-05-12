@@ -13,11 +13,20 @@ function buildPrompt(data) {
 
   const skills = data.skills || [];
   const skillsText = data.skillsFreeText || '';
+  const industries = data.industries || [];
+  const industriesText = data.industriesFreeText || '';
   const location = data.locationPref || 'flexible';
   const hours = data.hoursPerWeek || '45';
   const travel = data.travelTolerance || 'minimal';
   const risk = data.riskTolerance || 'medium';
   const dealBreakers = data.dealBreakers || [];
+
+  // Background fields
+  const undergradMajors = data.undergradMajor || [];
+  const yearsOut = data.yearsOutUndergrad || 'not specified';
+  const currentRole = data.currentRole || '';
+  const currentIndustry = data.currentIndustry || '';
+  const mbaStatus = data.mbaStatus || 'post-mba-recruiting';
 
   const riskLabels = {
     'low': 'strongly prefers stable salary and job security',
@@ -28,28 +37,51 @@ function buildPrompt(data) {
   };
   const riskDesc = riskLabels[risk] || 'balanced';
 
+  const mbaLabels = {
+    'post-mba-recruiting': 'currently in an MBA program recruiting for full-time post-MBA roles',
+    'post-mba-grad': 'recent MBA graduate (within 2 years)',
+    'mba-grad-established': 'MBA graduate with 2+ years of post-MBA experience',
+    'pre-mba': 'pre-MBA professional exploring options',
+  };
+  const mbaDesc = mbaLabels[mbaStatus] || 'MBA candidate';
+
+  const pathLabel = mbaStatus === 'pre-mba' ? 'How to get there' : 'How to get there from an MBA';
+
   const skillsList = skills.length ? skills.join(', ') : 'not specified';
   const dealBreakersList = dealBreakers.length ? dealBreakers.join(', ') : 'none specified';
   const extraSkills = skillsText.trim() ? ` Additional context: ${skillsText}` : '';
+  const industriesList = industries.length ? industries.join(', ') : 'open to all industries';
+  const extraIndustries = industriesText.trim() ? ` Additional context: ${industriesText}` : '';
+  const majorsList = undergradMajors.length ? undergradMajors.join(', ') : 'not specified';
+  const currentRoleDesc = currentRole || 'not specified';
+  const currentIndustryDesc = currentIndustry || 'not specified';
 
-  return `You are a sophisticated career advisor helping a Wharton MBA graduate find their ideal career path.
+  return `You are a sophisticated career advisor. Your client is ${mbaDesc}.
 
-Based on the following profile, recommend exactly 5 career paths. For each, provide a structured analysis.
+Based on the following profile, recommend exactly 5 career paths. Start directly with Career #1 — no introductory text, no preamble.
 
 USER PROFILE:
+- Undergrad major: ${majorsList}
+- Years since undergrad: ${yearsOut}
+- Current role: ${currentRoleDesc}
+- Current industry: ${currentIndustryDesc}
+- MBA status: ${mbaDesc}
 - Work style: prefers ${workStyle} environment, ${teamSize} setting
 - Primary motivation: ${motivation}
 - Skills and strengths: ${skillsList}.${extraSkills}
+- Industry preferences: ${industriesList}.${extraIndustries}
 - Lifestyle preferences: ${location} work, approximately ${hours} hours/week, ${travel} travel
 - Risk tolerance: ${riskDesc}
 - Deal breakers (must avoid): ${dealBreakersList}
+
+Use their current role, background, and MBA status to recommend career paths that are realistic and specific to where they actually are — not generic MBA advice. Reference their background where it creates a meaningful advantage or disadvantage.
 
 For each of the 5 career paths, use EXACTLY this format — do not deviate:
 
 ## [Career Title]
 
 **Why it fits your profile**
-[2–3 sentences explaining the fit against their specific answers above]
+[2–3 sentences explaining the fit, referencing their specific background and current role where relevant]
 
 **Day in the life**
 [2–3 sentences describing a typical day, grounded and specific — not generic]
@@ -58,13 +90,26 @@ For each of the 5 career paths, use EXACTLY this format — do not deviate:
 [Entry / Mid / Senior figures with context. Be specific — e.g. "$120k–$160k base + bonus at top firms"]
 
 **What you'd love**
-[2–3 specific things that align with their stated preferences and motivations]
+- [specific thing aligned with their preferences]
+- [specific thing aligned with their preferences]
+- [specific thing aligned with their preferences]
 
 **What would frustrate you**
-[1–2 honest tensions or downsides given their specific profile — do not sugarcoat]
+- [honest tension or downside given their profile — do not sugarcoat]
+- [honest tension or downside given their profile]
 
-**How to get there from a Wharton MBA**
-[Concrete 3–5 step path: recruiting cycles, certifications, first roles, timeline]
+**${pathLabel}**
+- [Step 1: specific action, timeline]
+- [Step 2: specific action, timeline]
+- [Step 3: specific action, timeline]
+- [Step 4: specific action, timeline]
+
+**Example companies**
+- [Company name] — [one line on what role/why it fits]
+- [Company name] — [one line]
+- [Company name] — [one line]
+- [Company name] — [one line]
+- [Company name] — [one line]
 
 ---
 
@@ -90,7 +135,7 @@ export default async function handler(req) {
       try {
         const msgStream = await client.messages.stream({
           model: 'claude-sonnet-4-6',
-          max_tokens: 2500,
+          max_tokens: 5000,
           messages: [{ role: 'user', content: prompt }],
         });
 
